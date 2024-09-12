@@ -1,4 +1,7 @@
 
+const fs = require('fs');
+
+
 class Participant {
     constructor(name, maxRunDistance, maxJumpHeight) {
         this.name = name;
@@ -8,39 +11,36 @@ class Participant {
 
     run(distance) {
         if (distance <= this.maxRunDistance) {
-            console.log(`${this.name} пробіг ${distance} метрів.`);
-            return true;
+            return `${this.name} пробіг ${distance} метрів.`;
         } else {
-            console.log(`${this.name} не зміг пробігти ${distance} метрів.`);
-            return false;
+            return `${this.name} не зміг пробігти ${distance} метрів.`;
         }
     }
 
     jump(height) {
         if (height <= this.maxJumpHeight) {
-            console.log(`${this.name} стрибнув на висоту ${height} метрів.`);
-            return true;
+            return `${this.name} стрибнув на висоту ${height} метрів.`;
         } else {
-            console.log(`${this.name} не зміг стрибнути на висоту ${height} метрів.`);
-            return false;
+            return `${this.name} не зміг стрибнути на висоту ${height} метрів.`;
         }
     }
 }
 
+
 class Human extends Participant {
     constructor(name) {
-        super(name, 100, 2);
+        super(name, 100, 2); 
     }
 }
 
 
 class Cat extends Participant {
     constructor(name) {
-        super(name, 50, 1);
+        super(name, 50, 1); 
     }
 }
 
-
+// Реалізація Робот
 class Robot extends Participant {
     constructor(name) {
         super(name, 200, 3); 
@@ -58,7 +58,6 @@ class Obstacle {
     }
 }
 
-
 class RunningTrack extends Obstacle {
     constructor(length) {
         super('Бігова доріжка');
@@ -66,15 +65,12 @@ class RunningTrack extends Obstacle {
     }
 
     pass(participant) {
-        console.log(`Учасник ${participant.name} намагається пройти ${this.name} довжиною ${this.length} метрів.`);
-        if (participant.run(this.length)) {
-            console.log(`Учасник ${participant.name} пройшов ${this.name} довжиною ${this.length} метрів.`);
-        } else {
-            console.log(`Учасник ${participant.name} не пройшов ${this.name} довжиною ${this.length} метрів.`);
-        }
+        const result = participant.run(this.length);
+        return result.includes('не зміг') ?
+            `${result} Не пройдено ${this.name}.` :
+            `${result} Пройдено ${this.name} довжиною ${this.length} метрів.`;
     }
 }
-
 
 class Wall extends Obstacle {
     constructor(height) {
@@ -83,15 +79,12 @@ class Wall extends Obstacle {
     }
 
     pass(participant) {
-        console.log(`Учасник ${participant.name} намагається пройти ${this.name} заввишки ${this.height} метрів.`);
-        if (participant.jump(this.height)) {
-            console.log(`Учасник ${participant.name} пройшов ${this.name} заввишки ${this.height} метрів.`);
-        } else {
-            console.log(`Учасник ${participant.name} не пройшов ${this.name} заввишки ${this.height} метрів.`);
-        }
+        const result = participant.jump(this.height);
+        return result.includes('не зміг') ?
+            `${result} Не пройдено ${this.name}.` :
+            `${result} Пройдено ${this.name} заввишки ${this.height} метрів.`;
     }
 }
-
 
 const participants = [
     new Human('Олег'),
@@ -99,28 +92,36 @@ const participants = [
     new Robot('R2D2')
 ];
 
-
 const obstacles = [
     new RunningTrack(100), 
-    new Wall(2)           
+    new Wall(2)            
 ];
 
-
 function makeParticipantsRunThroughObstacles(participants, obstacles) {
+    const results = [];
+
     participants.forEach(participant => {
         let passedAll = true;
         
         obstacles.forEach(obstacle => {
             if (passedAll) {
-                obstacle.pass(participant);
-                if (!obstacle.pass(participant)) {
+                const result = obstacle.pass(participant);
+                results.push(result);
+                if (result.includes('не пройдено')) {
                     passedAll = false;
-                    console.log(`Учасник ${participant.name} вибув.`);
+                    results.push(`Учасник ${participant.name} вибув.`);
                 }
             }
         });
     });
-}
 
+    fs.writeFile('results.txt', results.join('\n'), (err) => {
+        if (err) {
+            console.error('Не вдалося записати результати у файл:', err);
+        } else {
+            console.log('Результати записані у файл results.txt');
+        }
+    });
+}
 
 makeParticipantsRunThroughObstacles(participants, obstacles);
